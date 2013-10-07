@@ -155,4 +155,51 @@ void copyInto(pts Q) {
 int n(int i) {if(i==nv-1) return 0; else return i+1;}
 int p(int i) {if(i==0) return nv-1; else return i-1;}
 
+void resampleTo(pts P, int grid, int samples){
+  for(int i=0; i<grid; i++){
+    for(int j=0; j<grid; j++){
+      
+    }  
+  }  
+}
+
+void interpolate(pts P, pts Q, pts R, float t){
+  for(int i=0; i<nv; i++){
+    pt first = P.G[i];
+    pt second = Q.G[i];
+    pt third = R.G[i];    
+    
+    pt temp_one = L(first, second, 2*t);
+    pt temp_two = L(second, third, max(2*t - 1.0, 0.0));
+  
+    setPt(L(temp_one, temp_two, t), i);  
+  }
+}
+
  }  // end class pts
+
+void drawBezier(pt A, pt B, pt C, pt D){
+  beginShape();
+  for(float t=0; t<1.01; t+=1./40) B(A,B,C,D,t).v();
+  endShape();  
+}
+
+pt B(pt A, pt B, pt C, float t){
+  pt P = L(A,B,t);
+  pt Q = L(B,C,t);
+  return L(P,Q,t);
+}
+
+pt B(pt A, pt B, pt C, pt D, float t){
+  pt P = B(A,B,C,t);
+  pt Q = B(B,C,D,t);
+  return L(P,Q,t); 
+}
+ 
+pt B(pt A, pt B, pt C, pt D, pt E, float t){
+  pt P = B(A,B,C,D,t);
+  pt Q = B(B,C,D,E,t);
+  return L(P,Q,t);  
+}
+
+

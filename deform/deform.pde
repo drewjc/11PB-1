@@ -4,19 +4,25 @@
 PImage myImage;                            // image used as tecture 
 
 //**************************** global variables ****************************
-pts P = new pts(), Gmagenta = new pts(), Gred = new pts(), Ggreen = new pts(), Gblue = new pts(), Gyellow = new pts();
+pts P = new pts(), G0 = new pts(), G1 = new pts(), G2 = new pts(), G3 = new pts(), Gt = new pts();
+pts RG0 = new pts(), RG1 = new pts(), RG2 = new pts(), RG3 = new pts(), RGt = new pts();
+
 int levels=6, grid=5;
 float t=0, f=0, s=0;
 Boolean animate=false, fill=true, showIDs=false, timing=false;
+Boolean showKeyFrames=true, showGrids=true, showResampled=true, useSampled=false, useBezier=false;
+int samples = 15;
 int ms=0, me=0; // milli seconds start and end
 int npts=20000; // number of points
 //**************************** initialization ****************************
 void setup() {               // executed once at the begining 
-  size(600, 600,P3D);            // window size
+  size(900, 900,P3D);            // window size
   myImage = loadImage("data/pic.jpg");  // load image from file pic.jpg in folder data *** replace that file with your pic of your own face
-  P.declare();Gmagenta.declare();Gred.declare();Ggreen.declare();Gblue.declare();Gyellow.declare();
-  P.makeGrid(grid);Gmagenta.makeGrid(grid);Gred.makeGrid(grid);Ggreen.makeGrid(grid);Gblue.makeGrid(grid);Gyellow.makeGrid(grid);
-  P = Gmagenta;
+  P.declare();G0.declare();G1.declare();G2.declare();G3.declare();Gt.declare();
+  P.makeGrid(grid);G0.makeGrid(grid);G1.makeGrid(grid);G2.makeGrid(grid);G3.makeGrid(grid);Gt.makeGrid(grid);
+  RG0.declare();RG1.declare();RG2.declare();RG3.declare();RGt.declare();
+//  G0.loadPts(path+'0');G1.loadPts(path+'1');G2.loadPts(path+'2');RG3.loadPts(path+'3');
+  P = G0;
   }
 
 //**************************** display current frame ****************************
@@ -24,13 +30,41 @@ void draw() {      // executed at each frame
   background(white); // clear screen and paints white background
   noFill();  
   if(fill) P.paintImage(grid);
-  pen(magenta,7); Gmagenta.showGrid(grid);
-  pen(red,5); Gred.showGrid(grid);
-  pen(green,3); Ggreen.showGrid(grid);
-  pen(blue,1); Gblue.showGrid(grid);
+  pen(magenta,7); G0.showGrid(grid);
+  pen(red,5); G1.showGrid(grid);
+  pen(green,3); G2.showGrid(grid);             
+  pen(blue,1); G3.showGrid(grid);
+  
+  image(myImage, 0,0);
+  
+  if(showKeyFrames){
+    if(fill) {
+      noStroke();
+      if(useSampled){
+        RG1.paintImage(grid);  
+        RG2.paintImage(grid);
+        RG3.paintImage(grid);
+      }
+      else{
+        G1.paintImage(grid);  
+        G2.paintImage(grid);
+        G3.paintImage(grid);    
+      }
+      }
+    }  
+  
   
   if(showIDs) P.IDs(); // shows polyloop with vertex labels
- 
+  
+  if(animate || (keyPressed && key=='.')){
+    Gt.interpolate(G1, G2, G3, t);
+//    Gt.resampleTo(RGt, grid, samples);
+    noStroke(); if(fill) if(useSampled) RGt.paintImage(grid); else Gt.paintImage(grid);
+    pen(cyan, 1); if(showResampled) RGt.showGrid(grid);
+    pen(grey, 1); if(showGrids) Gt.showGrid(grid);
+     
+  }
+   
   if(animate) {t+=0.006; if(t>=1) animate=false;} 
   if(scribeText) {fill(black); displayHeader();}
   if(scribeText && !filming) displayFooter(); // shows title, menu, and my face & name 
@@ -49,21 +83,30 @@ void keyPressed() { // executed each time a key is pressed: sets the "keyPressed
   if(key=='~') { filming=!filming; } // filming on/off capture frames into folder FRAMES 
   if(key=='S') selectOutput("Select a file to write to:", "saveToFile");   
   if(key=='L') selectInput("Select a file to read from:", "readFromFile"); 
-  if(key=='s') P.savePts(path);   
-  if(key=='l') P.loadPts(path); 
+  if(key=='s') {G0.savePts(path+"0"); G1.savePts(path+"1"); G2.savePts(path+"2"); G3.savePts(path+"3");}   
+  if(key=='l') {G0.savePts(path+"0"); G1.savePts(path+"1"); G2.savePts(path+"2"); G3.savePts(path+"3"); P=G0;} 
 
   if(key=='f') fill=!fill; // used for timing
   if(key=='Q') exit();  // quit application
-  if(key=='#') showIDs=!showIDs;  // increment subdivision levels
+//  if(key=='#') showIDs=!showIDs;  // increment subdivision levels
+  if(key=='#') G0.makeGrid(grid);
   //if(key=='=') {P.G[2].setTo(P.G[0]); s=3;}
-  if(key=='=') {P.G = Gmagenta.G; s=3;}
-  if(key=='+') levels++;  // increment subdivision levels
-  if(key=='-') levels=max(0,levels-1);  // decrement subdivision levels
+  if(key=='=') {G0.copyInto(G1); G0.copyInto(G2); G0.copyInto(G3);}
+//  if(key=='+') levels++;  // increment subdivision levels
+//  if(key=='-') levels=max(0,levels-1);  // decrement subdivision levels
+  if(key=='+') samples++;
+  if(key=='-') samples=max(2, samples-1);
+  if(key=='u') useSampled=!useSampled;
+  if(key=='b') useBezier=!useBezier;
+  if(key=='k') showKeyFrames=!showKeyFrames;
+  if(key=='g') showGrids=!showGrids;
+  if(key=='m') showResampled=!showResampled;
+  if(key=='p') fill=!fill;
   
-  if(key=='0') P=Gmagenta;
-  if(key=='1') P=Gred;
-  if(key=='2') P=Ggreen;
-  if(key=='3') P=Gblue;
+  if(key=='0') {P=G0; fill=false;}
+  if(key=='1') P=G1;
+  if(key=='2') P=G2;
+  if(key=='3') P=G3;
   change=true;
   }
 
